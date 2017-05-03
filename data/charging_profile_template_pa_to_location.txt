@@ -1,0 +1,39 @@
+@startuml
+
+participant PA
+participant CPO
+participant eMSP
+participant "Charge Point" as CP1
+participant "Charge Point" as CP2
+
+PA -> CPO: PUT(ChargingProfileTemplate, country_code=..., party_id=...)
+
+PA -> CPO: POST(ChargingProfile, template_id=..., target_id=...)
+activate CPO
+CPO -> PA: ChargingProfile, chargingprofile_id=123456, status=REQUESTED
+
+CPO -> CPO: Determine individual Session Charging Profiles
+
+CPO -> CP1: SetChargingProfile
+activate CP1
+CPO -> CP2: SetChargingProfile
+activate CP2
+CP1 -> CPO: Accepted
+deactivate CP1
+CPO -> eMSP: POST(ChargingProfile, target_type=Session, target_id=123456A, status=ACTIVE)
+CP2 -> CPO: Accepted
+deactivate CP2
+CPO -> eMSP: POST(ChargingProfile, target_type=Session, target_id=123456B, status=ACTIVE)
+
+CPO -> PA: PATCH(ChargingProfile, status=ACTIVE)
+deactivate CPO
+
+CPO -> CPO: Monitor the execution of the Charging Profiles
+
+CPO -> PA: PATCH(ChargingProfile, status=FINISHED)
+activate CPO
+CPO -> eMSP: PATCH(ChargingProfile, status=FINISHED)
+CPO -> eMSP: PATCH(ChargingProfile, status=FINISHED){
+deactivate CPO
+
+@enduml
